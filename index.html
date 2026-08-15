@@ -23,6 +23,9 @@
       --accent-purple: #7928ca;
       --accent-purple-glow: rgba(121, 40, 202, 0.35);
       
+      --accent-cyan: #00f2fe;
+      --accent-cyan-glow: rgba(0, 242, 254, 0.35);
+      
       --text-primary: #ffffff;
       --text-secondary: #b3b3b3;
       --text-subdued: #727272;
@@ -145,11 +148,11 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* Navigation Bar Tabs (Home & Liked Songs) */
+    /* Navigation Bar Tabs (Home, Liked Songs, Recently Played) */
     .header-nav {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       background: rgba(255, 255, 255, 0.05);
       padding: 4px;
       border-radius: var(--radius-full);
@@ -171,6 +174,7 @@
       gap: 8px;
       transition: all 0.2s ease;
       user-select: none;
+      white-space: nowrap;
     }
 
     .nav-tab-btn:hover {
@@ -186,6 +190,10 @@
 
     .nav-tab-btn.is-active svg {
       fill: #e11d48;
+    }
+
+    .nav-tab-btn#nav-btn-recent.is-active svg {
+      fill: #0284c7;
     }
 
     .nav-liked-badge {
@@ -205,7 +213,7 @@
 
     .search-container {
       flex: 1;
-      max-width: 440px;
+      max-width: 420px;
       position: relative;
       display: flex;
       align-items: center;
@@ -840,6 +848,157 @@
     }
 
     /* ==========================================================================
+       Dedicated Recently Played View (Cyan/Blue Aura)
+       ========================================================================== */
+    .recent-header-banner {
+      position: relative;
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.4) 0%, rgba(30, 58, 138, 0.85) 50%, rgba(18, 18, 18, 0.95) 100%);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      border-radius: var(--radius-xl);
+      padding: 36px 40px;
+      display: flex;
+      align-items: flex-end;
+      gap: 32px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    .recent-header-banner::before {
+      content: "";
+      position: absolute;
+      top: -100px;
+      left: -100px;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 242, 254, 0.3) 0%, transparent 70%);
+      pointer-events: none;
+      filter: blur(50px);
+    }
+
+    .recent-cover-box {
+      width: 150px;
+      height: 150px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #00f2fe, #4facfe);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 12px 30px rgba(0, 242, 254, 0.35);
+      position: relative;
+      z-index: 2;
+    }
+
+    .recent-cover-box svg {
+      width: 68px;
+      height: 68px;
+      fill: #ffffff;
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
+    }
+
+    .recent-details {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .recent-type-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .recent-playlist-title {
+      font-size: 2.8rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      color: #ffffff;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .recent-meta-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-top: 4px;
+    }
+
+    .recent-actions-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .btn-play-recent-all {
+      background: var(--accent-green);
+      color: #000000;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 12px 26px;
+      border-radius: var(--radius-full);
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 6px 18px rgba(29, 185, 84, 0.35);
+      user-select: none;
+    }
+
+    .btn-play-recent-all:hover {
+      background: var(--accent-green-hover);
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 8px 24px rgba(29, 185, 84, 0.5);
+    }
+
+    /* Recently Played Empty State */
+    .recent-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 1px dashed rgba(0, 242, 254, 0.3);
+      margin-top: 10px;
+    }
+
+    .recent-empty-icon {
+      width: 64px;
+      height: 64px;
+      fill: rgba(255, 255, 255, 0.2);
+      margin-bottom: 18px;
+      animation: pulse-dot 2.5s infinite ease-in-out;
+    }
+
+    .recent-empty-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .recent-empty-desc {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      max-width: 380px;
+      margin-bottom: 24px;
+    }
+
+    /* ==========================================================================
        Library Grid & Track Cards
        ========================================================================== */
     .catalog-section {
@@ -1426,21 +1585,21 @@
       .hero-title {
         font-size: 2rem;
       }
-      .liked-header-banner {
+      .liked-header-banner, .recent-header-banner {
         flex-direction: column;
         align-items: flex-start;
         padding: 28px 24px;
         gap: 20px;
       }
-      .liked-cover-box {
+      .liked-cover-box, .recent-cover-box {
         width: 110px;
         height: 110px;
       }
-      .liked-cover-box svg {
+      .liked-cover-box svg, .recent-cover-box svg {
         width: 48px;
         height: 48px;
       }
-      .liked-playlist-title {
+      .liked-playlist-title, .recent-playlist-title {
         font-size: 2.2rem;
       }
     }
@@ -1451,6 +1610,14 @@
       }
       .brand span {
         display: none;
+      }
+      .header-nav {
+        gap: 4px;
+      }
+      .nav-tab-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        gap: 6px;
       }
       .app-main {
         padding: 16px 16px 140px;
@@ -1527,7 +1694,7 @@
         <span>Spotify</span>
       </a>
 
-      <!-- Navigation Tabs: Home & Liked Songs -->
+      <!-- Navigation Tabs: Home, Liked Songs & Recently Played -->
       <nav class="header-nav" aria-label="Main Navigation">
         <button class="nav-tab-btn is-active" id="nav-btn-home" title="Home Catalog">
           Home
@@ -1536,6 +1703,11 @@
           <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
           Liked Songs
           <span class="nav-liked-badge" id="nav-liked-badge">0</span>
+        </button>
+        <button class="nav-tab-btn" id="nav-btn-recent" title="Recently Played">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+          Recently Played
+          <span class="nav-liked-badge" id="nav-recent-badge">0</span>
         </button>
       </nav>
     </div>
@@ -1716,6 +1888,42 @@
         <h2 class="liked-empty-title">No liked songs yet ❤️</h2>
         <p class="liked-empty-desc">Start liking songs to see them here.</p>
         <button class="btn-browse-catalog" id="btn-browse-catalog">Explore Catalog</button>
+      </div>
+    </div>
+
+    <!-- ========================================================================
+         VIEW 3: DEDICATED RECENTLY PLAYED VIEW (Spotify-Inspired Cyan/Blue Aura)
+         ======================================================================== -->
+    <div class="view-container is-hidden" id="view-recent">
+      <section class="recent-header-banner">
+        <div class="recent-cover-box">
+          <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+        </div>
+        <div class="recent-details">
+          <span class="recent-type-label">History</span>
+          <h1 class="recent-playlist-title">Recently Played</h1>
+          <div class="recent-meta-info">
+            <span>Listening History</span>
+            <span>•</span>
+            <span id="recent-count-text">0 tracks</span>
+          </div>
+          <div class="recent-actions-bar" id="recent-actions-bar" style="display: none;">
+            <button class="btn-play-recent-all" id="btn-play-recent-all" title="Play recently played tracks">
+              ▶ Play Recent
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recently Played Grid -->
+      <div class="track-grid" id="recent-track-grid"></div>
+
+      <!-- Recently Played Empty State -->
+      <div class="recent-empty-state" id="recent-empty-state">
+        <svg class="recent-empty-icon" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+        <h2 class="recent-empty-title">No recently played songs</h2>
+        <p class="recent-empty-desc">Start listening to discover your recent tracks.</p>
+        <button class="btn-browse-catalog" id="btn-browse-recent-catalog">Explore Catalog</button>
       </div>
     </div>
 
@@ -1928,6 +2136,7 @@
          ======================================================================== */
       const STORAGE_KEYS = {
         LIKED_TRACKS: "spotify_liked_tracks",
+        RECENT_TRACKS: "spotify_recent_tracks",
         ACTIVE_TRACK_ID: "spotify_active_track_id",
         PLAYBACK_TIME: "spotify_playback_time",
         VOLUME_LEVEL: "spotify_volume_level"
@@ -1941,9 +2150,10 @@
         volume: 0.8,
         previousVolume: 0.8,
         likedTracks: new Set(),
+        recentlyPlayed: [], // Array of track IDs in MRU order (newest first, max 10)
         searchQuery: "",
         activeMood: "all",
-        currentView: "home", // "home" | "liked"
+        currentView: "home", // "home" | "liked" | "recent"
         isSeeking: false,
 
         init() {
@@ -1960,7 +2170,21 @@
             console.warn("Could not load liked tracks:", e);
           }
 
-          // 2. Restore Volume (REQ-24)
+          // 2. Restore Recently Played Tracks (Max 10)
+          try {
+            const savedRecent = localStorage.getItem(STORAGE_KEYS.RECENT_TRACKS);
+            if (savedRecent) {
+              const parsed = JSON.parse(savedRecent);
+              if (Array.isArray(parsed)) {
+                // Keep only valid track IDs
+                this.recentlyPlayed = parsed.filter(id => this.tracks.some(t => t.id === id)).slice(0, 10);
+              }
+            }
+          } catch (e) {
+            console.warn("Could not load recently played tracks:", e);
+          }
+
+          // 3. Restore Volume (REQ-24)
           try {
             const savedVol = localStorage.getItem(STORAGE_KEYS.VOLUME_LEVEL);
             if (savedVol !== null) {
@@ -1974,7 +2198,7 @@
             console.warn("Could not load volume level:", e);
           }
 
-          // 3. Restore Active Track ID (REQ-24)
+          // 4. Restore Active Track ID (REQ-24)
           try {
             const savedTrackId = localStorage.getItem(STORAGE_KEYS.ACTIVE_TRACK_ID);
             if (savedTrackId) {
@@ -2009,6 +2233,34 @@
           UIRenderer.syncLikeState();
           if (this.currentView === "liked") {
             UIRenderer.renderLikedGrid();
+          } else if (this.currentView === "recent") {
+            UIRenderer.renderRecentGrid();
+          }
+        },
+
+        addRecentlyPlayed(trackId) {
+          if (!trackId) return;
+
+          // Remove if already present so it moves to top (MRU)
+          this.recentlyPlayed = this.recentlyPlayed.filter(id => id !== trackId);
+          // Insert at top
+          this.recentlyPlayed.unshift(trackId);
+          // Keep max 10
+          if (this.recentlyPlayed.length > 10) {
+            this.recentlyPlayed = this.recentlyPlayed.slice(0, 10);
+          }
+
+          // Persist to localStorage
+          try {
+            localStorage.setItem(STORAGE_KEYS.RECENT_TRACKS, JSON.stringify(this.recentlyPlayed));
+          } catch (e) {
+            console.warn("Could not save recently played tracks:", e);
+          }
+
+          // Update UI badge & active view
+          UIRenderer.syncRecentBadge();
+          if (this.currentView === "recent") {
+            UIRenderer.renderRecentGrid();
           }
         },
 
@@ -2051,6 +2303,12 @@
 
         getLikedTracksList() {
           return this.tracks.filter(t => this.likedTracks.has(t.id));
+        },
+
+        getRecentlyPlayedList() {
+          return this.recentlyPlayed
+            .map(id => this.tracks.find(t => t.id === id))
+            .filter(Boolean);
         }
       };
 
@@ -2062,8 +2320,12 @@
         navBtnHome: document.getElementById("nav-btn-home"),
         navBtnLiked: document.getElementById("nav-btn-liked"),
         navLikedBadge: document.getElementById("nav-liked-badge"),
+        navBtnRecent: document.getElementById("nav-btn-recent"),
+        navRecentBadge: document.getElementById("nav-recent-badge"),
+        
         viewHome: document.getElementById("view-home"),
         viewLiked: document.getElementById("view-liked"),
+        viewRecent: document.getElementById("view-recent"),
         
         audio: document.getElementById("native-audio"),
         trackGrid: document.getElementById("track-grid"),
@@ -2089,6 +2351,14 @@
         likedActionsBar: document.getElementById("liked-actions-bar"),
         btnPlayLikedAll: document.getElementById("btn-play-liked-all"),
         btnBrowseCatalog: document.getElementById("btn-browse-catalog"),
+
+        // Recently Played View
+        recentTrackGrid: document.getElementById("recent-track-grid"),
+        recentEmptyState: document.getElementById("recent-empty-state"),
+        recentCountText: document.getElementById("recent-count-text"),
+        recentActionsBar: document.getElementById("recent-actions-bar"),
+        btnPlayRecentAll: document.getElementById("btn-play-recent-all"),
+        btnBrowseRecentCatalog: document.getElementById("btn-browse-recent-catalog"),
 
         // Player Bar
         playerCover: document.getElementById("player-cover"),
@@ -2179,6 +2449,7 @@
           UIRenderer.syncActiveCard();
 
           if (autoplay) {
+            State.addRecentlyPlayed(track.id);
             this.play();
           }
 
@@ -2186,6 +2457,11 @@
         },
 
         play() {
+          const track = State.getActiveTrack();
+          if (track) {
+            State.addRecentlyPlayed(track.id);
+          }
+
           DOM.audio.play().then(() => {
             State.isPlaying = true;
             this.onPlayStateChange(true);
@@ -2212,7 +2488,6 @@
         },
 
         next() {
-          // If in Liked view and liked tracks exist, prioritize liked progression or standard catalog
           const nextIndex = (State.activeTrackIndex + 1) % State.tracks.length;
           this.loadTrack(nextIndex, true);
         },
@@ -2420,6 +2695,38 @@
           });
         },
 
+        renderRecentGrid() {
+          const recentTracks = State.getRecentlyPlayedList();
+          DOM.recentTrackGrid.innerHTML = "";
+          const count = recentTracks.length;
+
+          DOM.recentCountText.textContent = `${count} track${count === 1 ? '' : 's'}`;
+          DOM.navRecentBadge.textContent = count.toString();
+
+          if (count === 0) {
+            DOM.recentTrackGrid.style.display = "none";
+            DOM.recentEmptyState.style.display = "flex";
+            DOM.recentActionsBar.style.display = "none";
+            return;
+          }
+
+          DOM.recentTrackGrid.style.display = "grid";
+          DOM.recentEmptyState.style.display = "none";
+          DOM.recentActionsBar.style.display = "flex";
+
+          recentTracks.forEach((track) => {
+            const isCurrent = (State.tracks[State.activeTrackIndex].id === track.id);
+            const isLiked = State.likedTracks.has(track.id);
+
+            const card = document.createElement("div");
+            card.className = `track-card ${isCurrent ? 'is-active' : ''} ${isCurrent && State.isPlaying ? 'is-playing' : ''}`;
+            card.dataset.trackId = track.id;
+            card.innerHTML = this.createTrackCardHTML(track, isCurrent, isLiked);
+
+            DOM.recentTrackGrid.appendChild(card);
+          });
+        },
+
         syncActiveCard() {
           const activeTrack = State.getActiveTrack();
           if (!activeTrack) return;
@@ -2478,6 +2785,12 @@
           });
         },
 
+        syncRecentBadge() {
+          const recentCount = State.recentlyPlayed.length;
+          DOM.navRecentBadge.textContent = recentCount.toString();
+          DOM.recentCountText.textContent = `${recentCount} track${recentCount === 1 ? '' : 's'}`;
+        },
+
         updateHeadings() {
           const moodTitles = {
             "all": "Featured Catalog",
@@ -2515,8 +2828,10 @@
           State.currentView = "home";
           DOM.navBtnHome.classList.add("is-active");
           DOM.navBtnLiked.classList.remove("is-active");
+          DOM.navBtnRecent.classList.remove("is-active");
           DOM.viewHome.classList.remove("is-hidden");
           DOM.viewLiked.classList.add("is-hidden");
+          DOM.viewRecent.classList.add("is-hidden");
           DOM.catalogCountBadge.style.display = "block";
           UIRenderer.renderGrid();
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2526,10 +2841,25 @@
           State.currentView = "liked";
           DOM.navBtnHome.classList.remove("is-active");
           DOM.navBtnLiked.classList.add("is-active");
+          DOM.navBtnRecent.classList.remove("is-active");
           DOM.viewHome.classList.add("is-hidden");
           DOM.viewLiked.classList.remove("is-hidden");
+          DOM.viewRecent.classList.add("is-hidden");
           DOM.catalogCountBadge.style.display = "none";
           UIRenderer.renderLikedGrid();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+
+        showRecent() {
+          State.currentView = "recent";
+          DOM.navBtnHome.classList.remove("is-active");
+          DOM.navBtnLiked.classList.remove("is-active");
+          DOM.navBtnRecent.classList.add("is-active");
+          DOM.viewHome.classList.add("is-hidden");
+          DOM.viewLiked.classList.add("is-hidden");
+          DOM.viewRecent.classList.remove("is-hidden");
+          DOM.catalogCountBadge.style.display = "none";
+          UIRenderer.renderRecentGrid();
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
       };
@@ -2564,7 +2894,7 @@
             DOM.searchClearBtn.style.display = "none";
           } else {
             DOM.searchClearBtn.style.display = "flex";
-            if (State.currentView === "liked") {
+            if (State.currentView !== "home") {
               NavigationEngine.showHome();
             }
           }
@@ -2587,11 +2917,13 @@
         // Navigation Bar Tabs
         DOM.navBtnHome.addEventListener("click", () => NavigationEngine.showHome());
         DOM.navBtnLiked.addEventListener("click", () => NavigationEngine.showLiked());
+        DOM.navBtnRecent.addEventListener("click", () => NavigationEngine.showRecent());
         DOM.brandLogo.addEventListener("click", (e) => {
           e.preventDefault();
           NavigationEngine.showHome();
         });
         DOM.btnBrowseCatalog.addEventListener("click", () => NavigationEngine.showHome());
+        DOM.btnBrowseRecentCatalog.addEventListener("click", () => NavigationEngine.showHome());
 
         // Play All Liked Songs Button
         DOM.btnPlayLikedAll.addEventListener("click", () => {
@@ -2600,6 +2932,17 @@
             const firstLikedIdx = State.tracks.findIndex(t => t.id === likedTracks[0].id);
             if (firstLikedIdx !== -1) {
               AudioEngine.loadTrack(firstLikedIdx, true);
+            }
+          }
+        });
+
+        // Play All Recent Songs Button
+        DOM.btnPlayRecentAll.addEventListener("click", () => {
+          const recentTracks = State.getRecentlyPlayedList();
+          if (recentTracks.length > 0) {
+            const firstRecentIdx = State.tracks.findIndex(t => t.id === recentTracks[0].id);
+            if (firstRecentIdx !== -1) {
+              AudioEngine.loadTrack(firstRecentIdx, true);
             }
           }
         });
@@ -2625,7 +2968,7 @@
           }
         });
 
-        // Universal Track Card Interaction (Delegation for Home Grid and Liked Grid)
+        // Universal Track Card Interaction (Delegation for Home, Liked, and Recent grids)
         document.addEventListener("click", (e) => {
           const likeBtn = e.target.closest(".like-btn");
           if (likeBtn) {
@@ -2750,6 +3093,7 @@
         State.init();
         UIRenderer.renderGrid();
         UIRenderer.syncLikeState();
+        UIRenderer.syncRecentBadge();
         AudioEngine.init();
         bindEvents();
       }
