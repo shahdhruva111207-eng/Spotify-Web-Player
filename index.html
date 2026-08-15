@@ -1,0 +1,2766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotify Web Player</title>
+  <style>
+    /* ==========================================================================
+       CSS Reset & Design System Variables
+       ========================================================================== */
+    :root {
+      --bg-base: #121212;
+      --bg-surface: #181818;
+      --bg-highlight: #242424;
+      --bg-elevated: #282828;
+      --bg-player: #181818;
+      
+      --accent-green: #1db954;
+      --accent-green-hover: #1ed760;
+      --accent-green-subtle: rgba(29, 185, 84, 0.15);
+      --accent-green-glow: rgba(29, 185, 84, 0.35);
+      
+      --accent-purple: #7928ca;
+      --accent-purple-glow: rgba(121, 40, 202, 0.35);
+      
+      --text-primary: #ffffff;
+      --text-secondary: #b3b3b3;
+      --text-subdued: #727272;
+      
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(255, 255, 255, 0.2);
+      
+      --heart-active: #1db954;
+      --heart-hover: #ffffff;
+      
+      --slider-track: #4d4d4d;
+      --slider-progress: #ffffff;
+      --slider-thumb: #ffffff;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --radius-full: 9999px;
+      
+      --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.5);
+      --shadow-hover: 0 16px 32px rgba(0, 0, 0, 0.7);
+      --shadow-glow: 0 0 30px rgba(29, 185, 84, 0.25);
+      
+      --seek-percent: 0%;
+      --volume-percent: 80%;
+      
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-family);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-base);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: var(--radius-full);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    /* ==========================================================================
+       Header & Navigation Bar
+       ========================================================================== */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(18, 18, 18, 0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 1.35rem;
+      letter-spacing: -0.5px;
+      cursor: pointer;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      fill: var(--accent-green);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .brand:hover .brand-icon {
+      transform: scale(1.1) rotate(-6deg);
+    }
+
+    .brand span {
+      background: linear-gradient(135deg, #ffffff 60%, var(--accent-green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Navigation Bar Tabs (Home & Liked Songs) */
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .nav-tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .nav-tab-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-tab-btn.is-active {
+      color: #000000;
+      background: var(--text-primary);
+      box-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-tab-btn.is-active svg {
+      fill: #e11d48;
+    }
+
+    .nav-liked-badge {
+      background: rgba(255, 255, 255, 0.15);
+      color: var(--text-primary);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      transition: background 0.2s;
+    }
+
+    .nav-tab-btn.is-active .nav-liked-badge {
+      background: #000000;
+      color: #ffffff;
+    }
+
+    .search-container {
+      flex: 1;
+      max-width: 440px;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      width: 18px;
+      height: 18px;
+      fill: var(--text-secondary);
+      pointer-events: none;
+      transition: fill 0.2s;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 42px;
+      padding: 0 40px 0 44px;
+      border-radius: var(--radius-full);
+      background: var(--bg-highlight);
+      border: 1px solid transparent;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.92rem;
+      font-weight: 400;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-subdued);
+    }
+
+    .search-input:hover {
+      background: var(--bg-elevated);
+      border-color: var(--border-focus);
+    }
+
+    .search-input:focus {
+      background: var(--bg-elevated);
+      border-color: var(--text-primary);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+    }
+
+    .search-input:focus ~ .search-icon {
+      fill: var(--text-primary);
+    }
+
+    .search-clear-btn {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      border-radius: var(--radius-full);
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .search-clear-btn:hover {
+      color: var(--text-primary);
+      transform: scale(1.15);
+    }
+
+    .search-clear-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    .header-stats {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      background: var(--bg-surface);
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-subtle);
+      white-space: nowrap;
+    }
+
+    /* ==========================================================================
+       Main App Layout & Views
+       ========================================================================== */
+    .app-main {
+      flex: 1;
+      padding: 24px 32px 140px; /* bottom padding for player bar */
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .view-container {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+      animation: fadeInView 0.25s ease-out;
+    }
+
+    .view-container.is-hidden {
+      display: none;
+    }
+
+    @keyframes fadeInView {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       Hero / Welcome Section (Glassmorphic & Neon)
+       ========================================================================== */
+    .hero-section {
+      position: relative;
+      background: linear-gradient(135deg, rgba(29, 185, 84, 0.12) 0%, rgba(24, 24, 24, 0.8) 50%, rgba(138, 43, 226, 0.1) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-xl);
+      padding: 40px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+
+    .hero-section::before {
+      content: "";
+      position: absolute;
+      top: -80px;
+      left: -80px;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--accent-green-glow) 0%, transparent 70%);
+      pointer-events: none;
+      filter: blur(40px);
+    }
+
+    .hero-section::after {
+      content: "";
+      position: absolute;
+      bottom: -60px;
+      right: 15%;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(138, 43, 226, 0.25) 0%, transparent 70%);
+      pointer-events: none;
+      filter: blur(50px);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 620px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(29, 185, 84, 0.15);
+      border: 1px solid rgba(29, 185, 84, 0.35);
+      color: var(--accent-green-hover);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      margin-bottom: 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-badge::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse-dot 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .hero-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #ffffff 40%, #e0e0e0 70%, var(--accent-green) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-hero-primary {
+      background: var(--accent-green);
+      color: #000000;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 14px 30px;
+      border-radius: var(--radius-full);
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 8px 20px rgba(29, 185, 84, 0.35);
+      user-select: none;
+    }
+
+    .btn-hero-primary:hover {
+      background: var(--accent-green-hover);
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 12px 28px rgba(29, 185, 84, 0.5);
+    }
+
+    .btn-hero-primary:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .btn-hero-secondary {
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 14px 28px;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+      backdrop-filter: blur(12px);
+      user-select: none;
+    }
+
+    .btn-hero-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.35);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Hero Right Visual Graphic */
+    .hero-visual {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hero-art-card {
+      position: relative;
+      width: 170px;
+      height: 170px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, #1db954, #8a2be2);
+      padding: 3px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(29, 185, 84, 0.3);
+      transform: rotate(3deg);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .hero-section:hover .hero-art-card {
+      transform: rotate(0deg) scale(1.04);
+    }
+
+    .hero-art-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: calc(var(--radius-lg) - 3px);
+      background: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-disc-ring {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 3px dashed rgba(29, 185, 84, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: spin-slow 20s linear infinite;
+    }
+
+    @keyframes spin-slow {
+      100% { transform: rotate(360deg); }
+    }
+
+    .hero-disc-ring svg {
+      width: 32px;
+      height: 32px;
+      fill: var(--accent-green);
+    }
+
+    .hero-visual-caption {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      letter-spacing: 0.5px;
+    }
+
+    /* ==========================================================================
+       Find Your Mood Section
+       ========================================================================== */
+    .mood-section {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .section-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .moods-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .mood-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mood-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--mood-gradient, linear-gradient(135deg, rgba(255,255,255,0.05), transparent));
+      opacity: 0.6;
+      transition: opacity 0.25s;
+    }
+
+    .mood-card:hover {
+      background: var(--bg-highlight);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .mood-card.is-active {
+      background: var(--bg-highlight);
+      border-color: var(--accent-green);
+      box-shadow: 0 0 20px rgba(29, 185, 84, 0.25);
+    }
+
+    .mood-card.is-active::before {
+      opacity: 1;
+    }
+
+    .mood-icon-wrapper {
+      position: relative;
+      z-index: 1;
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .mood-card:hover .mood-icon-wrapper {
+      transform: scale(1.1);
+    }
+
+    .mood-info {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+
+    .mood-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mood-card.is-active .mood-name {
+      color: var(--accent-green-hover);
+    }
+
+    .mood-count {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* ==========================================================================
+       Dedicated Liked Songs Playlist View (Spotify-Style Purple/Indigo Aura)
+       ========================================================================== */
+    .liked-header-banner {
+      position: relative;
+      background: linear-gradient(135deg, rgba(69, 10, 245, 0.45) 0%, rgba(30, 27, 75, 0.85) 50%, rgba(18, 18, 18, 0.95) 100%);
+      border: 1px solid rgba(138, 43, 226, 0.25);
+      border-radius: var(--radius-xl);
+      padding: 36px 40px;
+      display: flex;
+      align-items: flex-end;
+      gap: 32px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    .liked-header-banner::before {
+      content: "";
+      position: absolute;
+      top: -100px;
+      left: -100px;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(138, 43, 226, 0.35) 0%, transparent 70%);
+      pointer-events: none;
+      filter: blur(50px);
+    }
+
+    .liked-cover-box {
+      width: 150px;
+      height: 150px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #450af5, #8a2be2, #c4efd9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 12px 30px rgba(69, 10, 245, 0.4);
+      position: relative;
+      z-index: 2;
+    }
+
+    .liked-cover-box svg {
+      width: 68px;
+      height: 68px;
+      fill: #ffffff;
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
+    }
+
+    .liked-details {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .liked-type-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .liked-playlist-title {
+      font-size: 2.8rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      color: #ffffff;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .liked-meta-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-top: 4px;
+    }
+
+    .liked-actions-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .btn-play-liked-all {
+      background: var(--accent-green);
+      color: #000000;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 12px 26px;
+      border-radius: var(--radius-full);
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 6px 18px rgba(29, 185, 84, 0.35);
+      user-select: none;
+    }
+
+    .btn-play-liked-all:hover {
+      background: var(--accent-green-hover);
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 8px 24px rgba(29, 185, 84, 0.5);
+    }
+
+    /* Liked Songs Empty State */
+    .liked-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 1px dashed rgba(138, 43, 226, 0.3);
+      margin-top: 10px;
+    }
+
+    .liked-empty-heart {
+      width: 64px;
+      height: 64px;
+      fill: rgba(255, 255, 255, 0.2);
+      margin-bottom: 18px;
+      animation: pulse-dot 2.5s infinite ease-in-out;
+    }
+
+    .liked-empty-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .liked-empty-desc {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      max-width: 360px;
+      margin-bottom: 24px;
+    }
+
+    .btn-browse-catalog {
+      background: var(--text-primary);
+      color: #000000;
+      border: none;
+      padding: 12px 28px;
+      border-radius: var(--radius-full);
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .btn-browse-catalog:hover {
+      transform: scale(1.05);
+      background-color: #f0f0f0;
+    }
+
+    /* ==========================================================================
+       Library Grid & Track Cards
+       ========================================================================== */
+    .catalog-section {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .track-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 24px;
+    }
+
+    .track-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background-color 0.3s ease, transform 0.25s ease, box-shadow 0.25s ease, border-color 0.3s ease;
+      user-select: none;
+    }
+
+    .track-card:hover {
+      background: var(--bg-highlight);
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+      border-color: var(--border-subtle);
+    }
+
+    .track-card.is-active {
+      background: var(--bg-highlight);
+      border-color: rgba(29, 185, 84, 0.4);
+      box-shadow: 0 0 20px rgba(29, 185, 84, 0.15);
+    }
+
+    .card-cover-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 14px;
+      background: #282828;
+    }
+
+    .card-cover-art {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .track-card:hover .card-cover-art {
+      transform: scale(1.04);
+    }
+
+    /* Floating Play Button on Card */
+    .card-play-btn {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-full);
+      background: var(--accent-green);
+      border: none;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(8px) scale(0.9);
+      transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease;
+      z-index: 5;
+    }
+
+    .track-card:hover .card-play-btn,
+    .track-card.is-active .card-play-btn {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .card-play-btn:hover {
+      background: var(--accent-green-hover);
+      transform: translateY(0) scale(1.08) !important;
+    }
+
+    .card-play-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: #000000;
+      margin-left: 2px;
+    }
+
+    .track-card.is-active.is-playing .card-play-btn svg {
+      margin-left: 0;
+    }
+
+    /* Playing Equalizer Overlay */
+    .card-eq-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      padding: 4px 8px;
+      border-radius: var(--radius-full);
+      display: none;
+      align-items: center;
+      gap: 3px;
+      z-index: 4;
+    }
+
+    .track-card.is-active.is-playing .card-eq-overlay {
+      display: flex;
+    }
+
+    .eq-bar {
+      width: 3px;
+      height: 12px;
+      background: var(--accent-green);
+      border-radius: 2px;
+      animation: bounce 0.8s ease-in-out infinite alternate;
+    }
+    .eq-bar:nth-child(1) { animation-delay: 0.1s; height: 10px; }
+    .eq-bar:nth-child(2) { animation-delay: 0.4s; height: 14px; }
+    .eq-bar:nth-child(3) { animation-delay: 0.25s; height: 8px; }
+
+    @keyframes bounce {
+      0% { transform: scaleY(0.3); }
+      100% { transform: scaleY(1); }
+    }
+
+    .card-details {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+      transition: color 0.2s;
+    }
+
+    .track-card.is-active .card-title {
+      color: var(--accent-green);
+    }
+
+    .card-artist {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 10px;
+    }
+
+    .card-footer {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .card-duration {
+      font-size: 0.8rem;
+      color: var(--text-subdued);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .like-btn {
+      background: none;
+      border: none;
+      color: var(--text-subdued);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .like-btn:hover {
+      color: var(--text-primary);
+      transform: scale(1.15);
+    }
+
+    .like-btn.is-liked {
+      color: var(--heart-active) !important;
+    }
+
+    .like-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    /* ==========================================================================
+       Empty State (Catalog / Search)
+       ========================================================================== */
+    .empty-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 1px dashed var(--border-focus);
+      margin-top: 20px;
+    }
+
+    .empty-state-icon {
+      width: 56px;
+      height: 56px;
+      fill: var(--text-subdued);
+      margin-bottom: 16px;
+    }
+
+    .empty-state-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .empty-state-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      max-width: 360px;
+      margin-bottom: 20px;
+    }
+
+    .btn-reset-search {
+      background: var(--text-primary);
+      color: #000000;
+      border: none;
+      padding: 10px 24px;
+      border-radius: var(--radius-full);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .btn-reset-search:hover {
+      transform: scale(1.05);
+      background-color: #f0f0f0;
+    }
+
+    /* ==========================================================================
+       Persistent Bottom Player Bar
+       ========================================================================== */
+    .player-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 90px;
+      background-color: var(--bg-player);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 100;
+      user-select: none;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Left: Track Details */
+    .player-track-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 30%;
+      min-width: 180px;
+      max-width: 320px;
+    }
+
+    .player-cover-art {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      background: #282828;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      flex-shrink: 0;
+    }
+
+    .player-text {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      gap: 2px;
+    }
+
+    .player-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .player-artist {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .player-track-info .like-btn {
+      margin-left: 4px;
+      flex-shrink: 0;
+    }
+
+    /* Center: Controls & Timeline */
+    .player-controls-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: 40%;
+      max-width: 600px;
+    }
+
+    .player-buttons {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .control-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-full);
+      padding: 8px;
+      transition: color 0.2s, transform 0.15s;
+    }
+
+    .control-btn:hover {
+      color: var(--text-primary);
+      transform: scale(1.1);
+    }
+
+    .control-btn:active {
+      transform: scale(0.95);
+    }
+
+    .control-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    .btn-play-main {
+      width: 38px;
+      height: 38px;
+      background: var(--text-primary);
+      color: #000000;
+      border-radius: var(--radius-full);
+      padding: 0;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .btn-play-main:hover {
+      background: var(--text-primary);
+      transform: scale(1.08) !important;
+    }
+
+    .btn-play-main:active {
+      transform: scale(0.96) !important;
+    }
+
+    .btn-play-main svg {
+      width: 18px;
+      height: 18px;
+      fill: #000000;
+      margin-left: 2px;
+    }
+
+    .btn-play-main.is-playing svg {
+      margin-left: 0;
+    }
+
+    /* Timeline & Range Sliders */
+    .playback-timeline {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .time-stamp {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .custom-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: var(--radius-full);
+      background: #4d4d4d;
+      outline: none;
+      cursor: pointer;
+      position: relative;
+      transition: height 0.15s;
+    }
+
+    .custom-slider:hover {
+      height: 6px;
+    }
+
+    /* Seek Slider styling with dynamic fill */
+    #seek-slider {
+      background: linear-gradient(to right, var(--accent-green) 0%, var(--accent-green) var(--seek-percent), var(--slider-track) var(--seek-percent), var(--slider-track) 100%);
+    }
+
+    #seek-slider:hover {
+      background: linear-gradient(to right, var(--accent-green-hover) 0%, var(--accent-green-hover) var(--seek-percent), var(--slider-track) var(--seek-percent), var(--slider-track) 100%);
+    }
+
+    /* Volume Slider styling with dynamic fill */
+    #volume-slider {
+      background: linear-gradient(to right, var(--text-primary) 0%, var(--text-primary) var(--volume-percent), var(--slider-track) var(--volume-percent), var(--slider-track) 100%);
+    }
+
+    #volume-slider:hover {
+      background: linear-gradient(to right, var(--accent-green) 0%, var(--accent-green) var(--volume-percent), var(--slider-track) var(--volume-percent), var(--slider-track) 100%);
+    }
+
+    /* Slider Thumb WebKit */
+    .custom-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--slider-thumb);
+      cursor: pointer;
+      opacity: 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+      transition: opacity 0.15s, transform 0.15s;
+    }
+
+    .custom-slider:hover::-webkit-slider-thumb {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    /* Slider Thumb Firefox */
+    .custom-slider::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border: none;
+      border-radius: 50%;
+      background: var(--slider-thumb);
+      cursor: pointer;
+      opacity: 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+      transition: opacity 0.15s, transform 0.15s;
+    }
+
+    .custom-slider:hover::-moz-range-thumb {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    /* Right: Volume & Utilities */
+    .player-volume-container {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      width: 30%;
+      min-width: 140px;
+      max-width: 200px;
+    }
+
+    .btn-volume {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+
+    .btn-volume:hover {
+      color: var(--text-primary);
+    }
+
+    .btn-volume svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    #volume-slider {
+      width: 100px;
+    }
+
+    /* ==========================================================================
+       Toast Notification
+       ========================================================================== */
+    .toast-container {
+      position: fixed;
+      bottom: 104px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--accent-green);
+      color: #000000;
+      padding: 10px 20px;
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 200;
+    }
+
+    .toast-container.is-visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ==========================================================================
+       Responsive Media Queries
+       ========================================================================== */
+    @media (max-width: 992px) {
+      .app-header {
+        flex-wrap: wrap;
+        padding: 12px 20px;
+      }
+      .search-container {
+        order: 3;
+        max-width: 100%;
+        width: 100%;
+      }
+      .hero-section {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 32px 28px;
+        gap: 28px;
+      }
+      .hero-visual {
+        display: none;
+      }
+      .hero-title {
+        font-size: 2rem;
+      }
+      .liked-header-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 28px 24px;
+        gap: 20px;
+      }
+      .liked-cover-box {
+        width: 110px;
+        height: 110px;
+      }
+      .liked-cover-box svg {
+        width: 48px;
+        height: 48px;
+      }
+      .liked-playlist-title {
+        font-size: 2.2rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .app-header {
+        padding: 12px 16px;
+      }
+      .brand span {
+        display: none;
+      }
+      .app-main {
+        padding: 16px 16px 140px;
+      }
+      .hero-section {
+        padding: 24px 20px;
+      }
+      .hero-title {
+        font-size: 1.65rem;
+      }
+      .hero-subtitle {
+        font-size: 0.95rem;
+      }
+      .btn-hero-primary, .btn-hero-secondary {
+        width: 100%;
+        justify-content: center;
+        padding: 12px 20px;
+      }
+      .moods-container {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+      }
+      .mood-card {
+        padding: 12px;
+        gap: 10px;
+      }
+      .mood-icon-wrapper {
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
+      }
+      .track-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 16px;
+      }
+      .card-play-btn {
+        width: 40px;
+        height: 40px;
+      }
+      .player-bar {
+        padding: 0 14px;
+        height: 80px;
+      }
+      .player-track-info {
+        width: auto;
+        min-width: 0;
+        max-width: 140px;
+      }
+      .player-cover-art {
+        width: 44px;
+        height: 44px;
+      }
+      .player-controls-container {
+        width: 60%;
+      }
+      .player-volume-container {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       Top Navigation & Search Header
+       ========================================================================== -->
+  <header class="app-header">
+    <div class="header-left">
+      <a href="#" class="brand" id="brand-logo" title="Spotify Web Player">
+        <!-- Spotify Brand SVG Icon -->
+        <svg class="brand-icon" viewBox="0 0 24 24">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.508 17.308c-.22.36-.688.473-1.047.253-2.868-1.752-6.478-2.148-10.732-1.176-.412.094-.82-.162-.914-.574-.094-.412.162-.82.574-.914 4.656-1.064 8.648-.616 11.865 1.364.36.22.473.688.254 1.047zm1.47-3.262c-.276.45-.864.593-1.314.317-3.284-2.018-8.29-2.603-12.176-1.423-.507.153-1.04-.135-1.194-.642-.153-.507.135-1.04.642-1.194 4.437-1.347 9.948-.694 13.725 1.628.45.276.593.864.317 1.314zm.126-3.398c-3.938-2.338-10.435-2.554-14.205-1.41-.604.184-1.244-.162-1.428-.766-.184-.604.162-1.244.766-1.428 4.328-1.314 11.498-1.065 16.002 1.608.544.323.722 1.03.4 1.574-.324.544-1.03.722-1.535.422z"/>
+        </svg>
+        <span>Spotify</span>
+      </a>
+
+      <!-- Navigation Tabs: Home & Liked Songs -->
+      <nav class="header-nav" aria-label="Main Navigation">
+        <button class="nav-tab-btn is-active" id="nav-btn-home" title="Home Catalog">
+          Home
+        </button>
+        <button class="nav-tab-btn" id="nav-btn-liked" title="Your Liked Songs">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          Liked Songs
+          <span class="nav-liked-badge" id="nav-liked-badge">0</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="search-container">
+      <!-- Search SVG Icon -->
+      <svg class="search-icon" viewBox="0 0 24 24">
+        <path d="M10.533 1.278.04 11.77a.75.75 0 0 0 0 1.06l10.493 10.493a.75.75 0 0 0 1.06 0l10.493-10.493a.75.75 0 0 0 0-1.06L11.593 1.278a.75.75 0 0 0-1.06 0zm-8.373 11.02L11.06 3.398l8.899 8.9-8.899 8.9-8.899-8.9z"/>
+        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+      </svg>
+      <input type="text" id="search-input" class="search-input" placeholder="What do you want to play?" autocomplete="off" spellcheck="false">
+      <button class="search-clear-btn" id="search-clear-btn" title="Clear search">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+
+    <div class="header-stats" id="catalog-count-badge">8 Tracks Available</div>
+  </header>
+
+  <!-- ==========================================================================
+       Main Application Container (Views)
+       ========================================================================== -->
+  <main class="app-main">
+
+    <!-- ========================================================================
+         VIEW 1: HOME VIEW (Hero + Find Your Mood + Featured Catalog)
+         ======================================================================== -->
+    <div class="view-container" id="view-home">
+      <!-- 1. Hero / Welcome Section -->
+      <section class="hero-section" id="hero-section">
+        <div class="hero-content">
+          <div class="hero-badge">✦ Curated Soundscapes</div>
+          <h1 class="hero-title">Your music. Your mood. Your moment.</h1>
+          <p class="hero-subtitle">Discover music that matches your vibe.</p>
+          <div class="hero-actions">
+            <button class="btn-hero-primary" id="btn-hero-play" title="Start listening to music">
+              ▶ Start Listening
+            </button>
+            <button class="btn-hero-secondary" id="btn-hero-moods" title="Explore mood categories">
+              ✨ Explore Moods
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Decorative Visual Card -->
+        <div class="hero-visual" aria-hidden="true">
+          <div class="hero-art-card">
+            <div class="hero-art-inner">
+              <div class="hero-disc-ring">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg>
+              </div>
+              <span class="hero-visual-caption">IMMERSIVE AUDIO</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. "Find your mood" Filter Section -->
+      <section class="mood-section" id="mood-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Find your mood</h2>
+            <p class="section-subtitle">Curated soundscapes tuned for every headspace.</p>
+          </div>
+        </div>
+
+        <div class="moods-container" id="moods-container">
+          <!-- All Vibes -->
+          <div class="mood-card is-active" data-mood="all" style="--mood-gradient: linear-gradient(135deg, rgba(29, 185, 84, 0.25), rgba(24, 24, 24, 0.8));">
+            <div class="mood-icon-wrapper" style="background: rgba(29, 185, 84, 0.2);">🎵</div>
+            <div class="mood-info">
+              <span class="mood-name">All Vibes</span>
+              <span class="mood-count">8 tracks</span>
+            </div>
+          </div>
+
+          <!-- Chill -->
+          <div class="mood-card" data-mood="chill" style="--mood-gradient: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(79, 172, 254, 0.15));">
+            <div class="mood-icon-wrapper" style="background: rgba(0, 242, 254, 0.15);">🎧</div>
+            <div class="mood-info">
+              <span class="mood-name">Chill</span>
+              <span class="mood-count">4 tracks</span>
+            </div>
+          </div>
+
+          <!-- Energetic -->
+          <div class="mood-card" data-mood="energetic" style="--mood-gradient: linear-gradient(135deg, rgba(255, 65, 108, 0.2), rgba(255, 75, 43, 0.15));">
+            <div class="mood-icon-wrapper" style="background: rgba(255, 65, 108, 0.15);">⚡</div>
+            <div class="mood-info">
+              <span class="mood-name">Energetic</span>
+              <span class="mood-count">3 tracks</span>
+            </div>
+          </div>
+
+          <!-- Late Night -->
+          <div class="mood-card" data-mood="late-night" style="--mood-gradient: linear-gradient(135deg, rgba(138, 43, 226, 0.25), rgba(74, 0, 224, 0.15));">
+            <div class="mood-icon-wrapper" style="background: rgba(138, 43, 226, 0.15);">🌙</div>
+            <div class="mood-info">
+              <span class="mood-name">Late Night</span>
+              <span class="mood-count">4 tracks</span>
+            </div>
+          </div>
+
+          <!-- Romantic -->
+          <div class="mood-card" data-mood="romantic" style="--mood-gradient: linear-gradient(135deg, rgba(255, 0, 127, 0.2), rgba(121, 40, 202, 0.15));">
+            <div class="mood-icon-wrapper" style="background: rgba(255, 0, 127, 0.15);">💖</div>
+            <div class="mood-info">
+              <span class="mood-name">Romantic</span>
+              <span class="mood-count">3 tracks</span>
+            </div>
+          </div>
+
+          <!-- Focus -->
+          <div class="mood-card" data-mood="focus" style="--mood-gradient: linear-gradient(135deg, rgba(17, 153, 142, 0.2), rgba(56, 239, 125, 0.15));">
+            <div class="mood-icon-wrapper" style="background: rgba(17, 153, 142, 0.15);">🎯</div>
+            <div class="mood-info">
+              <span class="mood-name">Focus</span>
+              <span class="mood-count">5 tracks</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Featured Catalog Section -->
+      <section class="catalog-section" id="catalog-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title" id="section-title">Featured Catalog</h2>
+            <p class="section-subtitle" id="section-subtitle">Top curated tracks, synthwave melodies, and chill beats.</p>
+          </div>
+        </div>
+
+        <!-- Dynamic Track Grid -->
+        <div class="track-grid" id="track-grid"></div>
+
+        <!-- Empty Search / Filter State -->
+        <div class="empty-state" id="empty-state">
+          <svg class="empty-state-icon" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+          <h2 class="empty-state-title">No matching tracks found</h2>
+          <p class="empty-state-desc">Try selecting another mood or clearing your search query to see more music.</p>
+          <button class="btn-reset-search" id="btn-reset-search">Reset Filter & Search</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- ========================================================================
+         VIEW 2: DEDICATED LIKED SONGS VIEW (Spotify-Inspired Playlist Banner)
+         ======================================================================== -->
+    <div class="view-container is-hidden" id="view-liked">
+      <section class="liked-header-banner">
+        <div class="liked-cover-box">
+          <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        </div>
+        <div class="liked-details">
+          <span class="liked-type-label">Playlist</span>
+          <h1 class="liked-playlist-title">Liked Songs</h1>
+          <div class="liked-meta-info">
+            <span>Your Personal Collection</span>
+            <span>•</span>
+            <span id="liked-count-text">0 songs</span>
+          </div>
+          <div class="liked-actions-bar" id="liked-actions-bar" style="display: none;">
+            <button class="btn-play-liked-all" id="btn-play-liked-all" title="Play your liked songs">
+              ▶ Play Liked Songs
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Liked Songs Grid -->
+      <div class="track-grid" id="liked-track-grid"></div>
+
+      <!-- Liked Songs Empty State -->
+      <div class="liked-empty-state" id="liked-empty-state">
+        <svg class="liked-empty-heart" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        <h2 class="liked-empty-title">No liked songs yet ❤️</h2>
+        <p class="liked-empty-desc">Start liking songs to see them here.</p>
+        <button class="btn-browse-catalog" id="btn-browse-catalog">Explore Catalog</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==========================================================================
+       Persistent Bottom Player Bar
+       ========================================================================== -->
+  <footer class="player-bar">
+    <!-- Left: Currently Playing Track Info -->
+    <div class="player-track-info">
+      <img src="" alt="Album Artwork" id="player-cover" class="player-cover-art">
+      <div class="player-text">
+        <span class="player-title" id="player-title">Select a track</span>
+        <span class="player-artist" id="player-artist">Ready to play</span>
+      </div>
+      <button class="like-btn" id="player-like-btn" title="Save to Your Library">
+        <svg viewBox="0 0 24 24" class="heart-icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </button>
+    </div>
+
+    <!-- Center: Playback Controls & Timeline -->
+    <div class="player-controls-container">
+      <div class="player-buttons">
+        <!-- Previous Track Button -->
+        <button class="control-btn" id="btn-prev" title="Previous Track (Hold > 3s to restart)">
+          <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+        </button>
+
+        <!-- Main Play / Pause Button -->
+        <button class="control-btn btn-play-main" id="btn-play-pause" title="Play">
+          <svg viewBox="0 0 24 24" id="play-pause-icon"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+
+        <!-- Next Track Button -->
+        <button class="control-btn" id="btn-next" title="Next Track">
+          <svg viewBox="0 0 24 24"><path d="m6 18 8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+        </button>
+      </div>
+
+      <div class="playback-timeline">
+        <span class="time-stamp" id="current-time">0:00</span>
+        <input type="range" id="seek-slider" class="custom-slider" min="0" max="100" value="0" step="0.1" aria-label="Seek timeline">
+        <span class="time-stamp" id="total-duration">0:00</span>
+      </div>
+    </div>
+
+    <!-- Right: Volume & Utilities -->
+    <div class="player-volume-container">
+      <button class="btn-volume" id="btn-volume-toggle" title="Mute / Unmute">
+        <svg viewBox="0 0 24 24" id="volume-icon"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+      </button>
+      <input type="range" id="volume-slider" class="custom-slider" min="0" max="1" value="0.8" step="0.01" aria-label="Adjust volume">
+    </div>
+  </footer>
+
+  <!-- Hidden Native Audio Engine -->
+  <audio id="native-audio" preload="metadata"></audio>
+
+  <!-- Toast Notification -->
+  <div class="toast-container" id="toast">Added to Liked Songs</div>
+
+  <!-- ==========================================================================
+       Inline JavaScript Application Engine
+       ========================================================================== -->
+  <script>
+    (function () {
+      "use strict";
+
+      /* ========================================================================
+         1. Track Catalog Dataset (Hardcoded from TRACKS.md with Mood Tags)
+         ======================================================================== */
+      
+      // Dynamic SVG Artwork Generator for vivid cover art
+      function generateArtworkSVG(title, artist, primaryColor, secondaryColor, iconType) {
+        const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+          <defs>
+            <linearGradient id="grad-${title.replace(/[^a-zA-Z0-9]/g, '')}" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="${primaryColor}"/>
+              <stop offset="100%" stop-color="${secondaryColor}"/>
+            </linearGradient>
+            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="15" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+          </defs>
+          <rect width="300" height="300" fill="url(#grad-${title.replace(/[^a-zA-Z0-9]/g, '')})" rx="12"/>
+          <circle cx="150" cy="130" r="65" fill="rgba(0,0,0,0.25)" filter="url(#glow)"/>
+          <g transform="translate(115, 95)" fill="#ffffff">
+            ${
+              iconType === 'wave' 
+                ? '<path d="M10 40c8-20 18-20 26 0s18 20 26 0" stroke="#fff" stroke-width="8" stroke-linecap="round" fill="none"/><path d="M0 40c8-10 18-10 26 0" stroke="#fff" stroke-width="8" stroke-linecap="round" fill="none"/>'
+                : iconType === 'disc'
+                ? '<circle cx="35" cy="35" r="30" fill="none" stroke="#fff" stroke-width="7"/><circle cx="35" cy="35" r="10" fill="#fff"/>'
+                : '<path d="M50 0H20v45a18 18 0 1 0 10 16V16h20V0z"/>'
+            }
+          </g>
+          <text x="150" y="235" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="19" font-weight="800" text-anchor="middle" letter-spacing="-0.5">${title}</text>
+          <text x="150" y="260" fill="rgba(255,255,255,0.8)" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="14" font-weight="500" text-anchor="middle">${artist}</text>
+        </svg>`;
+        return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+      }
+
+      const TRACKS = [
+        {
+          id: "track-1",
+          title: "Midnight Horizon",
+          artist: "Solaris Wave",
+          album: "Neon Dreams",
+          duration: 225,
+          durationFormatted: "3:45",
+          moods: ["chill", "late-night", "focus"],
+          audioUrl: "https://actions.google.com/sounds/v1/ambiences/ambient_hum.ogg",
+          coverUrl: generateArtworkSVG("Midnight Horizon", "Solaris Wave", "#1db954", "#191414", "wave")
+        },
+        {
+          id: "track-2",
+          title: "Synthwave Odyssey",
+          artist: "Astral Echo",
+          album: "Cyber Sunset",
+          duration: 372,
+          durationFormatted: "6:12",
+          moods: ["energetic", "late-night"],
+          audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+          coverUrl: generateArtworkSVG("Synthwave Odyssey", "Astral Echo", "#8a2be2", "#4a00e0", "disc")
+        },
+        {
+          id: "track-3",
+          title: "Electric Aura",
+          artist: "Nova Pulse",
+          album: "Velocity",
+          duration: 425,
+          durationFormatted: "7:05",
+          moods: ["energetic", "focus"],
+          audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+          coverUrl: generateArtworkSVG("Electric Aura", "Nova Pulse", "#ff007f", "#7928ca", "music")
+        },
+        {
+          id: "track-4",
+          title: "Chillwave Drifter",
+          artist: "Lofi Reverie",
+          album: "Coffee & Rain",
+          duration: 344,
+          durationFormatted: "5:44",
+          moods: ["chill", "focus", "romantic"],
+          audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+          coverUrl: generateArtworkSVG("Chillwave Drifter", "Lofi Reverie", "#00f2fe", "#4facfe", "wave")
+        },
+        {
+          id: "track-5",
+          title: "Nebula Reverie",
+          artist: "Celestial Orbit",
+          album: "Starlight",
+          duration: 302,
+          durationFormatted: "5:02",
+          moods: ["focus", "chill", "late-night"],
+          audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+          coverUrl: generateArtworkSVG("Nebula Reverie", "Celestial Orbit", "#f12711", "#f5af19", "disc")
+        },
+        {
+          id: "track-6",
+          title: "Deep Space Echoes",
+          artist: "Void Walker",
+          album: "Event Horizon",
+          duration: 403,
+          durationFormatted: "6:43",
+          moods: ["late-night", "focus"],
+          audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+          coverUrl: generateArtworkSVG("Deep Space Echoes", "Void Walker", "#11998e", "#38ef7d", "wave")
+        },
+        {
+          id: "track-7",
+          title: "Urban Rhythm",
+          artist: "Metro Beats",
+          album: "Street Lights",
+          duration: 272,
+          durationFormatted: "4:32",
+          moods: ["energetic", "romantic"],
+          audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",
+          coverUrl: generateArtworkSVG("Urban Rhythm", "Metro Beats", "#ff416c", "#ff4b2b", "music")
+        },
+        {
+          id: "track-8",
+          title: "Retrograde Motion",
+          artist: "Quantum State",
+          album: "Future Past",
+          duration: 318,
+          durationFormatted: "5:18",
+          moods: ["chill", "late-night", "romantic"],
+          audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
+          coverUrl: generateArtworkSVG("Retrograde Motion", "Quantum State", "#654ea3", "#eaafc8", "disc")
+        }
+      ];
+
+      /* ========================================================================
+         2. SVG Icon Templates
+         ======================================================================== */
+      const ICONS = {
+        play: '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',
+        pause: '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
+        heartOutline: '<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',
+        volumeHigh: '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>',
+        volumeLow: '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>',
+        volumeMute: '<svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>'
+      };
+
+      /* ========================================================================
+         3. State Management & LocalStorage Persistence
+         ======================================================================== */
+      const STORAGE_KEYS = {
+        LIKED_TRACKS: "spotify_liked_tracks",
+        ACTIVE_TRACK_ID: "spotify_active_track_id",
+        PLAYBACK_TIME: "spotify_playback_time",
+        VOLUME_LEVEL: "spotify_volume_level"
+      };
+
+      const State = {
+        tracks: TRACKS,
+        activeTrackIndex: 0,
+        isPlaying: false,
+        isMuted: false,
+        volume: 0.8,
+        previousVolume: 0.8,
+        likedTracks: new Set(),
+        searchQuery: "",
+        activeMood: "all",
+        currentView: "home", // "home" | "liked"
+        isSeeking: false,
+
+        init() {
+          // 1. Restore Liked Tracks (REQ-21)
+          try {
+            const savedLikes = localStorage.getItem(STORAGE_KEYS.LIKED_TRACKS);
+            if (savedLikes) {
+              const parsed = JSON.parse(savedLikes);
+              if (Array.isArray(parsed)) {
+                this.likedTracks = new Set(parsed);
+              }
+            }
+          } catch (e) {
+            console.warn("Could not load liked tracks:", e);
+          }
+
+          // 2. Restore Volume (REQ-24)
+          try {
+            const savedVol = localStorage.getItem(STORAGE_KEYS.VOLUME_LEVEL);
+            if (savedVol !== null) {
+              const v = parseFloat(savedVol);
+              if (!isNaN(v) && v >= 0 && v <= 1) {
+                this.volume = v;
+                this.previousVolume = v > 0 ? v : 0.8;
+              }
+            }
+          } catch (e) {
+            console.warn("Could not load volume level:", e);
+          }
+
+          // 3. Restore Active Track ID (REQ-24)
+          try {
+            const savedTrackId = localStorage.getItem(STORAGE_KEYS.ACTIVE_TRACK_ID);
+            if (savedTrackId) {
+              const idx = this.tracks.findIndex(t => t.id === savedTrackId);
+              if (idx !== -1) {
+                this.activeTrackIndex = idx;
+              }
+            }
+          } catch (e) {
+            console.warn("Could not load active track:", e);
+          }
+        },
+
+        toggleLike(trackId) {
+          const wasLiked = this.likedTracks.has(trackId);
+          if (wasLiked) {
+            this.likedTracks.delete(trackId);
+            showToast("Removed from Liked Songs");
+          } else {
+            this.likedTracks.add(trackId);
+            showToast("Added to Liked Songs");
+          }
+
+          // Persist to localStorage (REQ-20)
+          try {
+            localStorage.setItem(STORAGE_KEYS.LIKED_TRACKS, JSON.stringify([...this.likedTracks]));
+          } catch (e) {
+            console.warn("Could not save liked tracks:", e);
+          }
+
+          // Update UI badge & views
+          UIRenderer.syncLikeState();
+          if (this.currentView === "liked") {
+            UIRenderer.renderLikedGrid();
+          }
+        },
+
+        saveVolume(vol) {
+          this.volume = vol;
+          if (vol > 0) this.previousVolume = vol;
+          try {
+            localStorage.setItem(STORAGE_KEYS.VOLUME_LEVEL, vol.toString());
+          } catch (e) {
+            console.warn("Could not save volume:", e);
+          }
+        },
+
+        savePlaybackState() {
+          try {
+            const activeTrack = this.tracks[this.activeTrackIndex];
+            if (activeTrack) {
+              localStorage.setItem(STORAGE_KEYS.ACTIVE_TRACK_ID, activeTrack.id);
+            }
+            if (DOM.audio.currentTime) {
+              localStorage.setItem(STORAGE_KEYS.PLAYBACK_TIME, DOM.audio.currentTime.toString());
+            }
+          } catch (e) {
+            console.warn("Could not save playback state:", e);
+          }
+        },
+
+        getSavedPlaybackTime() {
+          try {
+            const savedTime = localStorage.getItem(STORAGE_KEYS.PLAYBACK_TIME);
+            return savedTime ? parseFloat(savedTime) : 0;
+          } catch (e) {
+            return 0;
+          }
+        },
+
+        getActiveTrack() {
+          return this.tracks[this.activeTrackIndex];
+        },
+
+        getLikedTracksList() {
+          return this.tracks.filter(t => this.likedTracks.has(t.id));
+        }
+      };
+
+      /* ========================================================================
+         4. DOM Elements Cache
+         ======================================================================== */
+      const DOM = {
+        brandLogo: document.getElementById("brand-logo"),
+        navBtnHome: document.getElementById("nav-btn-home"),
+        navBtnLiked: document.getElementById("nav-btn-liked"),
+        navLikedBadge: document.getElementById("nav-liked-badge"),
+        viewHome: document.getElementById("view-home"),
+        viewLiked: document.getElementById("view-liked"),
+        
+        audio: document.getElementById("native-audio"),
+        trackGrid: document.getElementById("track-grid"),
+        emptyState: document.getElementById("empty-state"),
+        btnResetSearch: document.getElementById("btn-reset-search"),
+        searchInput: document.getElementById("search-input"),
+        searchClearBtn: document.getElementById("search-clear-btn"),
+        catalogCountBadge: document.getElementById("catalog-count-badge"),
+        sectionTitle: document.getElementById("section-title"),
+        sectionSubtitle: document.getElementById("section-subtitle"),
+        
+        // Hero & Moods
+        btnHeroPlay: document.getElementById("btn-hero-play"),
+        btnHeroMoods: document.getElementById("btn-hero-moods"),
+        moodSection: document.getElementById("mood-section"),
+        moodsContainer: document.getElementById("moods-container"),
+        moodCards: document.querySelectorAll(".mood-card"),
+        
+        // Liked Songs View
+        likedTrackGrid: document.getElementById("liked-track-grid"),
+        likedEmptyState: document.getElementById("liked-empty-state"),
+        likedCountText: document.getElementById("liked-count-text"),
+        likedActionsBar: document.getElementById("liked-actions-bar"),
+        btnPlayLikedAll: document.getElementById("btn-play-liked-all"),
+        btnBrowseCatalog: document.getElementById("btn-browse-catalog"),
+
+        // Player Bar
+        playerCover: document.getElementById("player-cover"),
+        playerTitle: document.getElementById("player-title"),
+        playerArtist: document.getElementById("player-artist"),
+        playerLikeBtn: document.getElementById("player-like-btn"),
+        btnPlayPause: document.getElementById("btn-play-pause"),
+        playPauseIcon: document.getElementById("play-pause-icon"),
+        btnPrev: document.getElementById("btn-prev"),
+        btnNext: document.getElementById("btn-next"),
+        currentTimeLabel: document.getElementById("current-time"),
+        totalDurationLabel: document.getElementById("total-duration"),
+        seekSlider: document.getElementById("seek-slider"),
+        volumeSlider: document.getElementById("volume-slider"),
+        btnVolumeToggle: document.getElementById("btn-volume-toggle"),
+        volumeIcon: document.getElementById("volume-icon"),
+        
+        toast: document.getElementById("toast")
+      };
+
+      /* ========================================================================
+         5. Helpers & Formatters
+         ======================================================================== */
+      function formatTime(seconds) {
+        if (isNaN(seconds) || seconds < 0) return "0:00";
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+      }
+
+      let toastTimer = null;
+      function showToast(message) {
+        DOM.toast.textContent = message;
+        DOM.toast.classList.add("is-visible");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          DOM.toast.classList.remove("is-visible");
+        }, 2200);
+      }
+
+      /* ========================================================================
+         6. Audio Engine
+         ======================================================================== */
+      const AudioEngine = {
+        init() {
+          DOM.audio.volume = State.volume;
+          this.updateVolumeSliderUI(State.volume);
+
+          // Restore initial track info into Player Bar without auto-starting
+          const track = State.getActiveTrack();
+          if (track) {
+            this.loadTrack(State.activeTrackIndex, false);
+            const savedTime = State.getSavedPlaybackTime();
+            if (savedTime > 0 && savedTime < track.duration) {
+              DOM.currentTimeLabel.textContent = formatTime(savedTime);
+              const progress = (savedTime / track.duration) * 100;
+              DOM.seekSlider.value = progress;
+              document.documentElement.style.setProperty('--seek-percent', `${progress}%`);
+            }
+          }
+
+          // Audio element event listeners
+          DOM.audio.addEventListener("timeupdate", () => this.onTimeUpdate());
+          DOM.audio.addEventListener("loadedmetadata", () => this.onLoadedMetadata());
+          DOM.audio.addEventListener("ended", () => this.onEnded());
+          DOM.audio.addEventListener("play", () => this.onPlayStateChange(true));
+          DOM.audio.addEventListener("pause", () => this.onPlayStateChange(false));
+          DOM.audio.addEventListener("error", (e) => this.onAudioError(e));
+        },
+
+        loadTrack(index, autoplay = true) {
+          State.activeTrackIndex = index;
+          const track = State.tracks[index];
+          if (!track) return;
+
+          DOM.audio.src = track.audioUrl;
+          DOM.playerCover.src = track.coverUrl;
+          DOM.playerTitle.textContent = track.title;
+          DOM.playerArtist.textContent = track.artist;
+          DOM.totalDurationLabel.textContent = track.durationFormatted;
+
+          // Reset seek bar
+          DOM.seekSlider.value = 0;
+          DOM.currentTimeLabel.textContent = "0:00";
+          document.documentElement.style.setProperty('--seek-percent', `0%`);
+
+          UIRenderer.syncLikeState();
+          UIRenderer.syncActiveCard();
+
+          if (autoplay) {
+            this.play();
+          }
+
+          State.savePlaybackState();
+        },
+
+        play() {
+          DOM.audio.play().then(() => {
+            State.isPlaying = true;
+            this.onPlayStateChange(true);
+          }).catch(err => {
+            console.warn("Autoplay / Audio load note:", err.message);
+            State.isPlaying = false;
+            this.onPlayStateChange(false);
+          });
+        },
+
+        pause() {
+          DOM.audio.pause();
+          State.isPlaying = false;
+          this.onPlayStateChange(false);
+          State.savePlaybackState();
+        },
+
+        togglePlayPause() {
+          if (DOM.audio.paused) {
+            this.play();
+          } else {
+            this.pause();
+          }
+        },
+
+        next() {
+          // If in Liked view and liked tracks exist, prioritize liked progression or standard catalog
+          const nextIndex = (State.activeTrackIndex + 1) % State.tracks.length;
+          this.loadTrack(nextIndex, true);
+        },
+
+        prev() {
+          if (DOM.audio.currentTime > 3) {
+            DOM.audio.currentTime = 0;
+            this.play();
+          } else {
+            const prevIndex = (State.activeTrackIndex - 1 + State.tracks.length) % State.tracks.length;
+            this.loadTrack(prevIndex, true);
+          }
+        },
+
+        seek(percent) {
+          const duration = DOM.audio.duration || State.getActiveTrack().duration;
+          if (duration && !isNaN(duration)) {
+            const targetTime = (percent / 100) * duration;
+            DOM.audio.currentTime = targetTime;
+            DOM.currentTimeLabel.textContent = formatTime(targetTime);
+            document.documentElement.style.setProperty('--seek-percent', `${percent}%`);
+            State.savePlaybackState();
+          }
+        },
+
+        setVolume(val) {
+          const clamped = Math.max(0, Math.min(1, val));
+          DOM.audio.volume = clamped;
+          DOM.audio.muted = (clamped === 0);
+          State.isMuted = (clamped === 0);
+          State.saveVolume(clamped);
+          this.updateVolumeSliderUI(clamped);
+        },
+
+        toggleMute() {
+          if (State.isMuted || DOM.audio.volume === 0) {
+            const restoreVol = State.previousVolume > 0 ? State.previousVolume : 0.8;
+            this.setVolume(restoreVol);
+          } else {
+            State.previousVolume = DOM.audio.volume;
+            this.setVolume(0);
+          }
+        },
+
+        updateVolumeSliderUI(vol) {
+          DOM.volumeSlider.value = vol;
+          const percent = vol * 100;
+          document.documentElement.style.setProperty('--volume-percent', `${percent}%`);
+          
+          if (vol === 0 || State.isMuted) {
+            DOM.volumeIcon.innerHTML = ICONS.volumeMute;
+          } else if (vol < 0.5) {
+            DOM.volumeIcon.innerHTML = ICONS.volumeLow;
+          } else {
+            DOM.volumeIcon.innerHTML = ICONS.volumeHigh;
+          }
+        },
+
+        onTimeUpdate() {
+          if (State.isSeeking) return;
+
+          const current = DOM.audio.currentTime;
+          const duration = DOM.audio.duration || State.getActiveTrack().duration;
+
+          DOM.currentTimeLabel.textContent = formatTime(current);
+
+          if (duration && duration > 0) {
+            const percent = (current / duration) * 100;
+            DOM.seekSlider.value = percent;
+            document.documentElement.style.setProperty('--seek-percent', `${percent}%`);
+          }
+        },
+
+        onLoadedMetadata() {
+          const duration = DOM.audio.duration;
+          if (duration && !isNaN(duration) && duration > 0) {
+            DOM.totalDurationLabel.textContent = formatTime(duration);
+          }
+        },
+
+        onEnded() {
+          this.next();
+        },
+
+        onPlayStateChange(playing) {
+          State.isPlaying = playing;
+          if (playing) {
+            DOM.btnPlayPause.classList.add("is-playing");
+            DOM.btnPlayPause.innerHTML = ICONS.pause;
+            DOM.btnPlayPause.title = "Pause";
+          } else {
+            DOM.btnPlayPause.classList.remove("is-playing");
+            DOM.btnPlayPause.innerHTML = ICONS.play;
+            DOM.btnPlayPause.title = "Play";
+          }
+          UIRenderer.syncActiveCard();
+        },
+
+        onAudioError(e) {
+          console.warn("Audio resource network/codec notice:", e);
+        }
+      };
+
+      /* ========================================================================
+         7. UI Renderer & Filter Controller
+         ======================================================================== */
+      const UIRenderer = {
+        createTrackCardHTML(track, isCurrent, isLiked) {
+          return `
+            <div class="card-cover-wrapper">
+              <img src="${track.coverUrl}" alt="${track.title}" class="card-cover-art" loading="lazy">
+              <div class="card-eq-overlay">
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+              </div>
+              <button class="card-play-btn" data-track-id="${track.id}" title="${isCurrent && State.isPlaying ? 'Pause' : 'Play'}">
+                ${isCurrent && State.isPlaying ? ICONS.pause : ICONS.play}
+              </button>
+            </div>
+            <div class="card-details">
+              <h3 class="card-title" title="${track.title}">${track.title}</h3>
+              <p class="card-artist" title="${track.artist}">${track.artist}</p>
+              <div class="card-footer">
+                <span class="card-duration">${track.durationFormatted}</span>
+                <button class="like-btn ${isLiked ? 'is-liked' : ''}" data-track-id="${track.id}" title="${isLiked ? 'Remove from Your Library' : 'Save to Your Library'}">
+                  ${ICONS.heartOutline}
+                </button>
+              </div>
+            </div>
+          `;
+        },
+
+        getActiveFilteredTracks() {
+          return State.tracks.filter(track => {
+            const matchesMood = (State.activeMood === "all" || (track.moods && track.moods.includes(State.activeMood)));
+            const q = State.searchQuery;
+            const matchesSearch = (q === "" || 
+              track.title.toLowerCase().includes(q) ||
+              track.artist.toLowerCase().includes(q) ||
+              track.album.toLowerCase().includes(q)
+            );
+
+            return matchesMood && matchesSearch;
+          });
+        },
+
+        renderGrid() {
+          const tracksToRender = this.getActiveFilteredTracks();
+          DOM.trackGrid.innerHTML = "";
+
+          if (tracksToRender.length === 0) {
+            DOM.trackGrid.style.display = "none";
+            DOM.emptyState.style.display = "flex";
+            DOM.catalogCountBadge.textContent = "0 Tracks Found";
+            return;
+          }
+
+          DOM.trackGrid.style.display = "grid";
+          DOM.emptyState.style.display = "none";
+          DOM.catalogCountBadge.textContent = `${tracksToRender.length} Track${tracksToRender.length === 1 ? '' : 's'}`;
+
+          tracksToRender.forEach((track) => {
+            const isCurrent = (State.tracks[State.activeTrackIndex].id === track.id);
+            const isLiked = State.likedTracks.has(track.id);
+
+            const card = document.createElement("div");
+            card.className = `track-card ${isCurrent ? 'is-active' : ''} ${isCurrent && State.isPlaying ? 'is-playing' : ''}`;
+            card.dataset.trackId = track.id;
+            card.innerHTML = this.createTrackCardHTML(track, isCurrent, isLiked);
+
+            DOM.trackGrid.appendChild(card);
+          });
+        },
+
+        renderLikedGrid() {
+          const likedTracks = State.getLikedTracksList();
+          DOM.likedTrackGrid.innerHTML = "";
+          const count = likedTracks.length;
+
+          DOM.likedCountText.textContent = `${count} song${count === 1 ? '' : 's'}`;
+          DOM.navLikedBadge.textContent = count.toString();
+
+          if (count === 0) {
+            DOM.likedTrackGrid.style.display = "none";
+            DOM.likedEmptyState.style.display = "flex";
+            DOM.likedActionsBar.style.display = "none";
+            return;
+          }
+
+          DOM.likedTrackGrid.style.display = "grid";
+          DOM.likedEmptyState.style.display = "none";
+          DOM.likedActionsBar.style.display = "flex";
+
+          likedTracks.forEach((track) => {
+            const isCurrent = (State.tracks[State.activeTrackIndex].id === track.id);
+            const isLiked = true;
+
+            const card = document.createElement("div");
+            card.className = `track-card ${isCurrent ? 'is-active' : ''} ${isCurrent && State.isPlaying ? 'is-playing' : ''}`;
+            card.dataset.trackId = track.id;
+            card.innerHTML = this.createTrackCardHTML(track, isCurrent, isLiked);
+
+            DOM.likedTrackGrid.appendChild(card);
+          });
+        },
+
+        syncActiveCard() {
+          const activeTrack = State.getActiveTrack();
+          if (!activeTrack) return;
+
+          const cards = document.querySelectorAll(".track-card");
+          cards.forEach(card => {
+            const trackId = card.dataset.trackId;
+            const playBtn = card.querySelector(".card-play-btn");
+
+            if (trackId === activeTrack.id) {
+              card.classList.add("is-active");
+              if (State.isPlaying) {
+                card.classList.add("is-playing");
+                if (playBtn) playBtn.innerHTML = ICONS.pause;
+              } else {
+                card.classList.remove("is-playing");
+                if (playBtn) playBtn.innerHTML = ICONS.play;
+              }
+            } else {
+              card.classList.remove("is-active", "is-playing");
+              if (playBtn) playBtn.innerHTML = ICONS.play;
+            }
+          });
+        },
+
+        syncLikeState() {
+          const likedCount = State.likedTracks.size;
+          DOM.navLikedBadge.textContent = likedCount.toString();
+          DOM.likedCountText.textContent = `${likedCount} song${likedCount === 1 ? '' : 's'}`;
+
+          const activeTrack = State.getActiveTrack();
+          if (activeTrack) {
+            const isLiked = State.likedTracks.has(activeTrack.id);
+            if (isLiked) {
+              DOM.playerLikeBtn.classList.add("is-liked");
+              DOM.playerLikeBtn.title = "Remove from Your Library";
+            } else {
+              DOM.playerLikeBtn.classList.remove("is-liked");
+              DOM.playerLikeBtn.title = "Save to Your Library";
+            }
+          }
+
+          // Sync all card like buttons across all visible views
+          const cardLikeBtns = document.querySelectorAll(".track-card .like-btn");
+          cardLikeBtns.forEach(btn => {
+            const id = btn.dataset.trackId;
+            if (id) {
+              if (State.likedTracks.has(id)) {
+                btn.classList.add("is-liked");
+                btn.title = "Remove from Your Library";
+              } else {
+                btn.classList.remove("is-liked");
+                btn.title = "Save to Your Library";
+              }
+            }
+          });
+        },
+
+        updateHeadings() {
+          const moodTitles = {
+            "all": "Featured Catalog",
+            "chill": "Chill Vibrations",
+            "energetic": "High Energy Anthems",
+            "late-night": "Late Night Waves",
+            "romantic": "Romantic Moods",
+            "focus": "Deep Focus Session"
+          };
+
+          const moodSubtitles = {
+            "all": "Top curated tracks, synthwave melodies, and chill beats.",
+            "chill": "Relaxing rhythms and ambient tones to unwind.",
+            "energetic": "Driving beats and pulsing rhythms to elevate your energy.",
+            "late-night": "Atmospheric soundscapes perfect for after-hours listening.",
+            "romantic": "Soulful melodies and warm harmonies.",
+            "focus": "Clean electronic and instrumental soundscapes to get in the zone."
+          };
+
+          if (State.searchQuery !== "") {
+            DOM.sectionTitle.textContent = `Search Results`;
+            DOM.sectionSubtitle.textContent = `Matching "${State.searchQuery}" ${State.activeMood !== 'all' ? 'in ' + State.activeMood : ''}`;
+          } else {
+            DOM.sectionTitle.textContent = moodTitles[State.activeMood] || "Featured Catalog";
+            DOM.sectionSubtitle.textContent = moodSubtitles[State.activeMood] || "";
+          }
+        }
+      };
+
+      /* ========================================================================
+         8. Navigation, Mood & Search Engine
+         ======================================================================== */
+      const NavigationEngine = {
+        showHome() {
+          State.currentView = "home";
+          DOM.navBtnHome.classList.add("is-active");
+          DOM.navBtnLiked.classList.remove("is-active");
+          DOM.viewHome.classList.remove("is-hidden");
+          DOM.viewLiked.classList.add("is-hidden");
+          DOM.catalogCountBadge.style.display = "block";
+          UIRenderer.renderGrid();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+
+        showLiked() {
+          State.currentView = "liked";
+          DOM.navBtnHome.classList.remove("is-active");
+          DOM.navBtnLiked.classList.add("is-active");
+          DOM.viewHome.classList.add("is-hidden");
+          DOM.viewLiked.classList.remove("is-hidden");
+          DOM.catalogCountBadge.style.display = "none";
+          UIRenderer.renderLikedGrid();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      };
+
+      const MoodEngine = {
+        selectMood(mood) {
+          State.activeMood = mood;
+
+          DOM.moodCards.forEach(card => {
+            if (card.dataset.mood === mood) {
+              card.classList.add("is-active");
+            } else {
+              card.classList.remove("is-active");
+            }
+          });
+
+          UIRenderer.updateHeadings();
+          UIRenderer.renderGrid();
+        },
+
+        resetAll() {
+          this.selectMood("all");
+          SearchEngine.clear();
+        }
+      };
+
+      const SearchEngine = {
+        filter(query) {
+          State.searchQuery = query.trim().toLowerCase();
+
+          if (State.searchQuery === "") {
+            DOM.searchClearBtn.style.display = "none";
+          } else {
+            DOM.searchClearBtn.style.display = "flex";
+            if (State.currentView === "liked") {
+              NavigationEngine.showHome();
+            }
+          }
+
+          UIRenderer.updateHeadings();
+          UIRenderer.renderGrid();
+        },
+
+        clear() {
+          DOM.searchInput.value = "";
+          this.filter("");
+          DOM.searchInput.focus();
+        }
+      };
+
+      /* ========================================================================
+         9. Event Handlers & Controller
+         ======================================================================== */
+      function bindEvents() {
+        // Navigation Bar Tabs
+        DOM.navBtnHome.addEventListener("click", () => NavigationEngine.showHome());
+        DOM.navBtnLiked.addEventListener("click", () => NavigationEngine.showLiked());
+        DOM.brandLogo.addEventListener("click", (e) => {
+          e.preventDefault();
+          NavigationEngine.showHome();
+        });
+        DOM.btnBrowseCatalog.addEventListener("click", () => NavigationEngine.showHome());
+
+        // Play All Liked Songs Button
+        DOM.btnPlayLikedAll.addEventListener("click", () => {
+          const likedTracks = State.getLikedTracksList();
+          if (likedTracks.length > 0) {
+            const firstLikedIdx = State.tracks.findIndex(t => t.id === likedTracks[0].id);
+            if (firstLikedIdx !== -1) {
+              AudioEngine.loadTrack(firstLikedIdx, true);
+            }
+          }
+        });
+
+        // Hero Section Action Buttons
+        DOM.btnHeroPlay.addEventListener("click", () => {
+          if (State.isPlaying) {
+            AudioEngine.pause();
+          } else {
+            AudioEngine.loadTrack(State.activeTrackIndex, true);
+          }
+        });
+
+        DOM.btnHeroMoods.addEventListener("click", () => {
+          DOM.moodSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+
+        // Mood Cards click
+        DOM.moodsContainer.addEventListener("click", (e) => {
+          const card = e.target.closest(".mood-card");
+          if (card && card.dataset.mood) {
+            MoodEngine.selectMood(card.dataset.mood);
+          }
+        });
+
+        // Universal Track Card Interaction (Delegation for Home Grid and Liked Grid)
+        document.addEventListener("click", (e) => {
+          const likeBtn = e.target.closest(".like-btn");
+          if (likeBtn) {
+            e.stopPropagation();
+            const trackId = likeBtn.dataset.trackId;
+            if (trackId) {
+              State.toggleLike(trackId);
+            }
+            return;
+          }
+
+          const card = e.target.closest(".track-card");
+          if (card) {
+            const trackId = card.dataset.trackId;
+            const index = State.tracks.findIndex(t => t.id === trackId);
+            if (index !== -1) {
+              if (index === State.activeTrackIndex) {
+                AudioEngine.togglePlayPause();
+              } else {
+                AudioEngine.loadTrack(index, true);
+              }
+            }
+          }
+        });
+
+        // Player Bar Controls
+        DOM.btnPlayPause.addEventListener("click", () => AudioEngine.togglePlayPause());
+        DOM.btnNext.addEventListener("click", () => AudioEngine.next());
+        DOM.btnPrev.addEventListener("click", () => AudioEngine.prev());
+
+        // Player Bar Like Button
+        DOM.playerLikeBtn.addEventListener("click", () => {
+          const track = State.getActiveTrack();
+          if (track) {
+            State.toggleLike(track.id);
+          }
+        });
+
+        // Timeline Scrubbing
+        DOM.seekSlider.addEventListener("input", (e) => {
+          State.isSeeking = true;
+          const val = parseFloat(e.target.value);
+          document.documentElement.style.setProperty('--seek-percent', `${val}%`);
+          const duration = DOM.audio.duration || State.getActiveTrack().duration;
+          DOM.currentTimeLabel.textContent = formatTime((val / 100) * duration);
+        });
+
+        DOM.seekSlider.addEventListener("change", (e) => {
+          State.isSeeking = false;
+          AudioEngine.seek(parseFloat(e.target.value));
+        });
+
+        // Volume Controls
+        DOM.volumeSlider.addEventListener("input", (e) => {
+          AudioEngine.setVolume(parseFloat(e.target.value));
+        });
+
+        DOM.btnVolumeToggle.addEventListener("click", () => {
+          AudioEngine.toggleMute();
+        });
+
+        // Real-time Search
+        DOM.searchInput.addEventListener("input", (e) => {
+          SearchEngine.filter(e.target.value);
+        });
+
+        DOM.searchClearBtn.addEventListener("click", () => {
+          SearchEngine.clear();
+        });
+
+        DOM.btnResetSearch.addEventListener("click", () => {
+          MoodEngine.resetAll();
+        });
+
+        // Keyboard Shortcuts
+        window.addEventListener("keydown", (e) => {
+          if (document.activeElement === DOM.searchInput) {
+            if (e.key === "Escape") {
+              SearchEngine.clear();
+              DOM.searchInput.blur();
+            }
+            return;
+          }
+
+          if (e.code === "Space") {
+            e.preventDefault();
+            AudioEngine.togglePlayPause();
+          } else if (e.code === "ArrowRight") {
+            e.preventDefault();
+            const newTime = Math.min(DOM.audio.duration || 0, DOM.audio.currentTime + 5);
+            DOM.audio.currentTime = newTime;
+          } else if (e.code === "ArrowLeft") {
+            e.preventDefault();
+            const newTime = Math.max(0, DOM.audio.currentTime - 5);
+            DOM.audio.currentTime = newTime;
+          } else if (e.code === "ArrowUp") {
+            e.preventDefault();
+            AudioEngine.setVolume(Math.min(1, State.volume + 0.05));
+          } else if (e.code === "ArrowDown") {
+            e.preventDefault();
+            AudioEngine.setVolume(Math.max(0, State.volume - 0.05));
+          } else if (e.key.toLowerCase() === "m") {
+            AudioEngine.toggleMute();
+          } else if (e.key.toLowerCase() === "l") {
+            const track = State.getActiveTrack();
+            if (track) {
+              State.toggleLike(track.id);
+            }
+          }
+        });
+
+        // Save position before page unload
+        window.addEventListener("beforeunload", () => {
+          State.savePlaybackState();
+        });
+      }
+
+      /* ========================================================================
+         10. Application Bootstrap
+         ======================================================================== */
+      function initApp() {
+        State.init();
+        UIRenderer.renderGrid();
+        UIRenderer.syncLikeState();
+        AudioEngine.init();
+        bindEvents();
+      }
+
+      // Initialize on DOM Ready
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initApp);
+      } else {
+        initApp();
+      }
+    })();
+  </script>
+</body>
+</html>
